@@ -1,0 +1,300 @@
+<!-- By Misha Karpov -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+TEXT DISFORMATOR
+</title>
+
+<style>
+
+#newtext{
+width: 1px;
+height: 1px;
+margin-left -10px;
+overflow: hidden;
+}
+
+
+#text{
+height: 90%; 
+width: 100%;
+}
+
+.btn
+{
+padding: 5px; 
+margin: 5px;
+
+
+}
+
+#tooltip{
+display: none;
+width: 100%;
+height: 50px;
+position: fixed;
+top: calc(100% - 50px);
+background-color: #000;
+color: #fff;
+text-align: center;
+
+}
+
+
+h2 {
+padding: 10px;
+margin: 0;
+}
+
+input[type='checkbox']{
+margin-right: 20px;
+}
+
+label {
+margin-left: 10px;
+}
+
+#spec
+{
+display: none;
+padding: 5px;
+width: 100%;
+word-wrap: break-word;
+}
+
+#spec a {
+margin-right: 15px;
+text-decoration: none;
+color: #707070;
+font-size: 20px;
+}
+
+#spec a:hover {
+color: #000;
+}
+
+#transform{
+width: 110px;
+padding: 3px;
+margin-left:5px;
+}
+
+.checkboxLine{
+display: inline-block;
+word-wrap: normal;
+}
+
+
+</style>
+
+</head>
+<body onload="document.getElementById('text').select();" >
+
+<div id="tooltip">
+<h2>Text has been copied to clipboard!</h2>
+</div>
+
+
+<input onclick="disformate();" type="submit" value="DisFormatate!" class="btn">
+<input onclick="clean();" type="submit" value="Clear" class="btn">
+<input id="btnSpec" onclick="onSpec();" type="submit" value="&on&" class="btn">
+<input onclick="transl();" type="submit" value="Translate" class="btn">
+<input onclick="toTxt();" type="submit" value="text.txt" class="btn">
+<select id="transform" onchange="disformate();">
+<option value="none" selected hidden>↓Transform↓</option>
+<option value="uppercase">Uppercase</option>
+<option value="lowercase">Lowercase</option>
+<option value="capitalize">Capitalize</option>
+
+</select>
+<div class="checkboxLine"><label for="abz">All to one line ?</label> <input type="checkbox" id="abz" name="abz"></div>
+<div class="checkboxLine"><label for="rel">Remove empty lines ?</label> <input type="checkbox" id="rel" name="rel"></div>
+<div class="checkboxLine"><label for="rfnc">Remove reference links [0] ?</label> <input type="checkbox" id="rfnc" name="rfnc"></div>
+
+<div id="spec"></div>
+
+<textarea id="text" ></textarea>
+
+
+<div id="newtext">
+</div>
+
+
+
+<script>
+
+function disformate()
+{
+
+/*
+var newtext=document.getElementById("text").value;
+if(newtext=="") {document.getElementById('text').select(); return;}
+*/
+
+var text=document.getElementById("text").value;
+if(text=="") {document.getElementById('text').select(); return;}
+
+if(document.getElementById("abz").checked) document.getElementById("newtext").innerHTML=text;
+else document.getElementById("newtext").innerText=text;
+var newtext=document.getElementById("newtext").innerText
+
+
+
+//if(document.getElementById("abz").checked) { newtext=newtext.replace(/\r|\n/g, " "); }
+if(document.getElementById("rel").checked) { newtext=newtext.replace(/\n+/g, "\n"); newtext=newtext.replace(/\r+/g, "\r"); }
+if(document.getElementById("rfnc").checked) { newtext=newtext.replace(/\[\d{1,3}]/g,""); }
+
+//newtext=newtext.trim();
+
+var reg = / \,| \.| \:| \!| \?/g;
+newtext=newtext.replace(reg, function(a) { return a.slice(1); });
+
+
+switch(document.getElementById("transform").value){
+case "uppercase":
+newtext=newtext.toUpperCase();
+break;
+
+case "lowercase":
+newtext=newtext.toLowerCase();
+break;
+
+case "capitalize":
+newtext=newtext.capitalize();
+break;
+}
+
+
+document.getElementById("text").value=newtext;
+
+
+document.getElementById('text').select();
+document.execCommand('copy');
+
+document.getElementById("transform").getElementsByTagName('option')[0].selected = 'selected';
+
+document.getElementById("tooltip").style.display = "block";
+
+setTimeout(function() { document.getElementById("tooltip").style.display = "none"; }, 1500)
+
+
+}
+
+
+function clean(){
+document.getElementById("tooltip").style.display = "none";
+document.getElementById("text").value="";
+//document.getElementById("abz").checked=false;
+document.getElementById('text').select();
+isSpec(false);
+document.getElementById("transform").getElementsByTagName('option')[0].selected = 'selected';
+}
+
+function transl()
+{
+disformate();
+var text=document.getElementById("text").value;
+if(text=="") {document.getElementById('text').select(); return;}
+
+window.open('https://translate.google.com/#auto/en/'+encodeURI(text));
+}
+
+function toTxt()
+{
+disformate();
+var text=document.getElementById("text").value;
+if(text=="") {document.getElementById('text').select(); return;}
+
+  var link = document.createElement("a");
+  link.download = "text.txt";
+  // Construct the uri
+  var uri = "data:application/html;base64,"+b64EncodeUnicode(text);
+  link.href = uri;
+  document.body.appendChild(link);
+  link.click();
+  // Cleanup the DOM
+  document.body.removeChild(link);
+  delete link;
+
+}
+
+function b64EncodeUnicode(str) {
+    // first we use encodeURIComponent to get percent-encoded UTF-8,
+    // then we convert the percent encodings into raw bytes which
+    // can be fed into btoa.
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        function toSolidBytes(match, p1) {
+            return String.fromCharCode('0x' + p1);
+    }));
+}
+
+
+function spec(item){
+document.getElementById("text").value=item.innerHTML;
+isSpec(false);
+
+disformate();
+
+}
+
+var isLoadSpec=false;
+function onSpec()
+{
+if(!isLoadSpec)
+{
+isSpec(true);
+// SPEC SYMBOLS
+var arrSpec=[
+"∞","λ","ω", "Δ", "δ", "—", "•", "±", "÷", "≈" ,"≥", "≤", "√", "π", "ƒ" ,"α", "β", "θ", "φ", "η", "σ", "τ", "ρ", "ε", "μ", "Ω", "Ø", "□", "§", "∏", "∑", "∫", "→", "←", "↑", "↓", "sin(ωt+φ)", "cos(ωt+φ)"
+];
+
+arrSpec.forEach(function(item) {
+
+var elem = document.createElement('a');
+elem.href="#";
+elem.onclick=function(){spec(this)};
+elem.innerHTML=item;
+
+document.getElementById("spec").appendChild(elem);
+});
+isLoadSpec=true;
+return;
+}
+
+if(document.getElementById("spec").style.display!="none")
+{
+isSpec(false);
+return;
+}
+
+isSpec(true);
+
+
+}
+
+function isSpec(status)
+{
+if(!status)
+{
+document.getElementById("spec").style.display="none";
+document.getElementById("btnSpec").value="&on&";
+document.getElementById('text').select();
+return;
+}
+document.getElementById("spec").style.display="block";
+document.getElementById("btnSpec").value="&off&";
+}
+
+
+String.prototype.capitalize = function() {
+    return (this.toLowerCase()).replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+};
+
+
+</script>
+
+
+</body>
+</html>
